@@ -1,38 +1,69 @@
+import bodyParser from "body-parser";
+import cors from "cors";
+import express from "express";
+import { v4 as uuidv4 } from "uuid";
 import { WebSocket, WebSocketServer } from "ws";
+import { addIp, broadcastData, containsNewIps } from "./helper.js";
 import { getLocalIp } from "./ip_helper.js";
-import { addIp, containsNewIps, broadcastData } from "./helper.js";
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
 
 const MAIN_NODE = "192.168.1.96:4000";
 const PORT = process.env.PORT || 3001;
+const EXPRESS_PORT = +PORT + 1000;
 const HOST = getLocalIp() + ":" + PORT;
 
+/*Missing ttl for messages, can spam*/
 const TYPE = {
   askForIps: "ips",
   sendIpList: "ips",
   sendIp: "add_ip",
+  addEntry: "add_entry",
+  queryEntries: "query_entries",
 };
 
 let p2pUsers = [];
 let localServer = undefined;
 let mainServerSocketClient;
 let secondaryServerSocketClient;
+let database = {};
 
 const onMessage = (socket, rawData, p2ps) => {
   const data = rawData.data || rawData;
   const { type, content } = JSON.parse(data);
   console.log("<--- Received", type, "from", socket._url);
   switch (type) {
-    case "add_ip":
+    case TYPE.sendIp:
       if (!socket._url) {
         socket._url = content[0];
       }
       add_ip(p2ps, content, data, localServer, secondaryServerSocketClient);
       break;
-    case "ips":
+    case TYPE.sendIpList:
       if (content) {
         receive_ips(p2ps, content);
       } else {
         socket.send(JSON.stringify({ type: TYPE.sendIpList, content: p2ps }));
+      }
+      break;
+    case TYPE.addEntry:
+      const { key, value } = content;
+      if (Object.keys(database).indexOf(content.key) == -1) {
+        database[key] = value;
+        broadcastData(
+          JSON.stringify({ type: TYPE.addEntry, content: { key, value } }),
+          localServer,
+          secondaryServerSocketClient
+        );
+      }
+      break;
+    case TYPE.queryEntries:
+      if (content) {
+        database = content;
+      } else {
+        socket.send(JSON.stringify({ type: TYPE.queryEntries, content: database }));
       }
       break;
   }
@@ -80,6 +111,8 @@ function configureClient(server, serverToConnect) {
     console.log("Sended my ip to ", serverToConnect, "my ip is", HOST);
     server.send(JSON.stringify({ type: TYPE.askForIps }));
     console.log("Asked all ips to", serverToConnect);
+    server.send(JSON.stringify({ type: TYPE.queryEntries }));
+    console.log("Asked all queries to", serverToConnect);
   });
   server.addEventListener("message", function (data) {
     onMessage(server, data, p2pUsers);
@@ -108,3 +141,28 @@ mainServerSocketClient.onerror = function () {
 };
 configureClient(mainServerSocketClient, MAIN_NODE);
 initServer();
+
+app.get("/", (req, res) => {
+  res.json({
+    p2pUsers,
+    mainNode: MAIN_NODE,
+    mainConnexion: mainServerSocketClient?._url,
+    secondConnexion: secondaryServerSocketClient?._url,
+    database,
+  });
+});
+
+app.post("/add", (req, res) => {
+  const id = uuidv4();
+  database[id] = req.body;
+  broadcastData(
+    JSON.stringify({ type: TYPE.addEntry, content: { key: id, value: req.body } }),
+    localServer,
+    secondaryServerSocketClient
+  );
+  res.sendStatus(200);
+});
+
+app.listen(EXPRESS_PORT, () => {
+  console.log(`Server listening on port ${EXPRESS_PORT}`);
+});
