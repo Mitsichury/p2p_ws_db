@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const MAIN_NODE = "192.168.1.96:4000";
+const REGISTRY = process.env.REGISTRY || "192.168.1.96:4000";
 const PORT = process.env.PORT || 3001;
 const EXPRESS_PORT = +PORT + 1000;
 const HOST = getLocalIp() + ":" + PORT;
@@ -88,7 +88,7 @@ function connectToAnother(p2ps) {
     console.log("Second server already defined");
     return;
   }
-  const availableServers = p2ps.filter((ip) => ip != HOST && ip != MAIN_NODE);
+  const availableServers = p2ps.filter((ip) => ip != HOST && ip != REGISTRY);
   if (availableServers.length == 0) {
     console.log("No server available :", p2ps);
     return;
@@ -135,17 +135,17 @@ function add_ip(p2ps, content, data, localServer, secondaryServerSocketClient) {
 }
 
 /*------------------------------------- MAIN -------------------------------------*/
-mainServerSocketClient = new WebSocket("ws://" + MAIN_NODE);
+mainServerSocketClient = new WebSocket("ws://" + REGISTRY);
 mainServerSocketClient.onerror = function () {
   console.log("could not contact server, maybe i'm the first one");
 };
-configureClient(mainServerSocketClient, MAIN_NODE);
+configureClient(mainServerSocketClient, REGISTRY);
 initServer();
 
 app.get("/", (req, res) => {
   res.json({
     p2pUsers,
-    mainNode: MAIN_NODE,
+    mainNode: REGISTRY,
     mainConnexion: mainServerSocketClient?._url,
     secondConnexion: secondaryServerSocketClient?._url,
     database,
