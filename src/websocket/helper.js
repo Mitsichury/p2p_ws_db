@@ -10,11 +10,11 @@ export const onMessage = (sockets, socket, rawData, database) => {
       if (!socket._url) {
         socket._url = content[0];
       }
-      add_ip(database, content, data, sockets);
+      add_ip(content, data);
       break;
     case TYPE.sendIpList:
       if (content) {
-        add_ip(database, content, data, sockets, true);
+        add_ip(content, data, true);
       } else {
         socket.send(JSON.stringify({ type: TYPE.sendIpList, content: database.getIps() }));
       }
@@ -34,17 +34,19 @@ export const onMessage = (sockets, socket, rawData, database) => {
       }
       break;
   }
-};
 
-function add_ip(database, content, data, sockets, broadcast = false) {
-  if (database.containsUnknownIps(content)) {
-    database.addIp(content);
-    connectToAnother(database, sockets);
-    if (broadcast) {
-      sockets.broadcast(data);
+  function add_ip(content, data, broadcast = false) {
+    if (database.containsUnknownIps(content)) {
+      database.addIp(content);
+      connectToAnother(database, sockets);
+      if (broadcast) {
+        sockets.broadcast(data);
+      }
     }
   }
-}
+};
+
+
 
 export function configureClient(sockets, server, serverAddressToConnect, database, host) {
   if (!server) {
