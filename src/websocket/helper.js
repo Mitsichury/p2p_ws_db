@@ -1,7 +1,7 @@
 import { TYPE } from "../model/thread_type.js";
 import { connectToAnother } from "./client.js";
 
-export const onMessage = (sockets, socket, rawData, database, host, registry) => {
+export const onMessage = (sockets, socket, rawData, database) => {
   const data = rawData.data || rawData;
   const { type, content } = JSON.parse(data);
   console.log("<--- Received", type, "from", socket._url);
@@ -14,7 +14,7 @@ export const onMessage = (sockets, socket, rawData, database, host, registry) =>
       break;
     case TYPE.sendIpList:
       if (content) {
-        receive_ips(database, content, host, registry, sockets);
+        receive_ips(database, content, sockets);
       } else {
         socket.send(JSON.stringify({ type: TYPE.sendIpList, content: database.getIps() }));
       }
@@ -36,10 +36,10 @@ export const onMessage = (sockets, socket, rawData, database, host, registry) =>
   }
 };
 
-function receive_ips(database, content, host, registry, sockets) {
+function receive_ips(database, content, sockets) {
   if (database.containsUnknownIps(content)) {
     database.addIp(content);
-    connectToAnother(database, host, registry, sockets);
+    connectToAnother(database, sockets);
   }
 }
 
@@ -51,8 +51,7 @@ function add_ip(database, content, data, sockets) {
   }
 }
 
-// used to configure messages for server & clients
-export function configureClient(sockets, server, serverAddressToConnect, database, host, registry) {
+export function configureClient(sockets, server, serverAddressToConnect, database, host) {
   if (!server) {
     console.log("server instance is null");
     return;
@@ -67,6 +66,6 @@ export function configureClient(sockets, server, serverAddressToConnect, databas
     console.log("Asked all queries to", serverAddressToConnect);
   });
   server.addEventListener("message", function (data) {
-    onMessage(sockets, server, data, database, host, registry);
+    onMessage(sockets, server, data, database);
   });
 }

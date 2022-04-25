@@ -1,11 +1,12 @@
 import { WebSocket } from "ws";
 import { configureClient } from "./helper.js";
 
-export function connectToAnother(database, host, registry, sockets) {
-  const p2ps = database.getIps();
-  const availableServers = p2ps.filter((ip) => ip != host && ip != registry);
+export function connectToAnother(database, sockets) {
+  const ips = database.getIps();
+  const availableServers = sockets.getConnectableServer(database.getIps());
+
   if (availableServers.length == 0) {
-    console.log("No server available :", p2ps);
+    console.log("No server available :", ips);
     return;
   }
   console.log("availableServers", availableServers);
@@ -14,11 +15,11 @@ export function connectToAnother(database, host, registry, sockets) {
   sockets.addClient(serverToConnect);
 }
 
-export function setupLocalWebsocketClient(sockets, address, database, host, registry) {
+export function setupLocalWebsocketClient(sockets, database, address, host) {
   let client = new WebSocket("ws://" + address);
   client.onerror = function () {
     console.log("Could not contact server");
   };
-  configureClient(sockets, client, address, database, host, registry);
+  configureClient(sockets, client, address, database, host);
   return client;
 }

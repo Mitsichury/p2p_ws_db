@@ -8,10 +8,10 @@ export function initializeSockets(database, PORT, HOST, REGISTRY) {
   this.PORT = PORT;
   this.HOST = HOST;
   this.REGISTRY = REGISTRY;
-  this.server = setupLocalWebsocketServer(this, database, PORT, HOST, REGISTRY);
+  this.server = setupLocalWebsocketServer(this, database, PORT, HOST);
 
   this.addClient = (address) => {
-    this.clients.push(setupLocalWebsocketClient(this, address, database, HOST, REGISTRY));
+    this.clients.push(setupLocalWebsocketClient(this, database, address, HOST));
   };
 
   this.getClients = () => {
@@ -22,18 +22,21 @@ export function initializeSockets(database, PORT, HOST, REGISTRY) {
     return this.server;
   };
 
+  this.getConnectableServer = (ips) => {
+    return ips.filter((ip) => ip != this.HOST && ip != this.REGISTRY);
+  };
+
   this.broadcast = (data) => {
     const self = this;
-    console.log(this.server)
-    this.server?.clients?.forEach(function each(client) {
+    this.server?.clients?.forEach((client) => {
       if (client.readyState === WebSocket.OPEN && client != self.server) {
         client.send(data);
       }
     });
-    for (let client in this.clients) {
+    this.clients?.forEach((client) => {
       if (client && client.readyState === WebSocket.OPEN) {
         client.send(data);
       }
-    }
+    });
   };
 }
