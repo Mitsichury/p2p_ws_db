@@ -14,7 +14,7 @@ export const onMessage = (sockets, socket, rawData, database) => {
       break;
     case TYPE.sendIpList:
       if (content) {
-        receive_ips(database, content, sockets);
+        add_ip(database, content, data, sockets, true);
       } else {
         socket.send(JSON.stringify({ type: TYPE.sendIpList, content: database.getIps() }));
       }
@@ -36,19 +36,13 @@ export const onMessage = (sockets, socket, rawData, database) => {
   }
 };
 
-function receive_ips(database, content, sockets) {
-  console.log(content)
+function add_ip(database, content, data, sockets, broadcast = false) {
   if (database.containsUnknownIps(content)) {
     database.addIp(content);
     connectToAnother(database, sockets);
-  }
-}
-
-function add_ip(database, content, data, sockets) {
-  if (database.containsUnknownIps(content)) {
-    console.log("Add new client to list:", content);
-    database.addIp(content);
-    sockets.broadcast(data);
+    if (broadcast) {
+      sockets.broadcast(data);
+    }
   }
 }
 

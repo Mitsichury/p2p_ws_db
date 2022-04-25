@@ -10,9 +10,10 @@ export function connectToAnother(database, sockets) {
     return;
   }
   console.log("availableServers", availableServers);
-  const serverToConnect = availableServers[Math.floor(Math.random() * availableServers.length)];
-  console.log("new connection to ", serverToConnect);
-  sockets.addClient(serverToConnect);
+  availableServers.forEach((ip) => {
+    console.log("new connection to ", ip);
+    sockets.addClient(ip);
+  });
 }
 
 export function setupLocalWebsocketClient(sockets, database, address, host) {

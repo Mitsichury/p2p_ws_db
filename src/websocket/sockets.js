@@ -23,7 +23,8 @@ export function initializeSockets(database, PORT, HOST, REGISTRY) {
   };
 
   this.getConnectableServer = (ips) => {
-    return ips.filter((ip) => ip != this.HOST && ip != this.REGISTRY);
+    const connected = this.clients?.map(({ _url }) => _url);
+    return ips.filter((ip) => ip != this.HOST && ip != this.REGISTRY && connected.indexOf(ip) === -1);
   };
 
   this.broadcast = (data) => {
