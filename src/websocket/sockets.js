@@ -23,7 +23,8 @@ export function initializeSockets(database, PORT, HOST, REGISTRY) {
   };
 
   this.getConnectableServer = (ips) => {
-    const connected = this.clients?.map(({ _url }) => _url);
+    const connected = this.clients?.map(({ _url }) => _url.replace("ws://", ""));
+    console.log("connected server:", connected)
     return ips.filter((ip) => ip != this.HOST && ip != this.REGISTRY && connected.indexOf(ip) === -1);
   };
 
