@@ -1,36 +1,21 @@
-import bodyParser from "body-parser";
-import cors from "cors";
-import express from "express";
-import { v4 as uuidv4 } from "uuid";
 import { WebSocket, WebSocketServer } from "ws";
-import { addIp, broadcastData, containsNewIps } from "./helper.js";
+import { broadcastData } from "./helper.js";
+import { initializeDatabase } from "./src/database/index.js";
+import { webserver } from "./src/webserver/index.js";
 import { getLocalIp } from "./ip_helper.js";
-
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+import { TYPE } from "./src/model/thread_type.js";
 
 const REGISTRY = process.env.REGISTRY || "192.168.1.96:4000";
 const PORT = process.env.PORT || 3001;
 const EXPRESS_PORT = +PORT + 1000;
 const HOST = getLocalIp() + ":" + PORT;
 
-/*Missing ttl for messages, can spam*/
-const TYPE = {
-  askForIps: "ips",
-  sendIpList: "ips",
-  sendIp: "add_ip",
-  addEntry: "add_entry",
-  queryEntries: "query_entries",
-};
-
-let p2pUsers = [];
-let localServer = undefined;
+let localServer;
 let mainServerSocketClient;
 let secondaryServerSocketClient;
-let database = {};
+const database = initializeDatabase();
 
-const onMessage = (socket, rawData, p2ps) => {
+const onMessage = (socket, rawData, database) => {
   const data = rawData.data || rawData;
   const { type, content } = JSON.parse(data);
   console.log("<--- Received", type, "from", socket._url);
@@ -39,19 +24,19 @@ const onMessage = (socket, rawData, p2ps) => {
       if (!socket._url) {
         socket._url = content[0];
       }
-      add_ip(p2ps, content, data, localServer, secondaryServerSocketClient);
+      add_ip(database, content, data, localServer, secondaryServerSocketClient);
       break;
     case TYPE.sendIpList:
       if (content) {
-        receive_ips(p2ps, content);
+        receive_ips(database, content);
       } else {
-        socket.send(JSON.stringify({ type: TYPE.sendIpList, content: p2ps }));
+        socket.send(JSON.stringify({ type: TYPE.sendIpList, content: database.getIps() }));
       }
       break;
     case TYPE.addEntry:
       const { key, value } = content;
-      if (Object.keys(database).indexOf(content.key) == -1) {
-        database[key] = value;
+      if (database.entryExists(key)) {
+        database.addEntry(value, key);
         broadcastData(
           JSON.stringify({ type: TYPE.addEntry, content: { key, value } }),
           localServer,
@@ -61,9 +46,9 @@ const onMessage = (socket, rawData, p2ps) => {
       break;
     case TYPE.queryEntries:
       if (content) {
-        database = content;
+        database.addAll(content);
       } else {
-        socket.send(JSON.stringify({ type: TYPE.queryEntries, content: database }));
+        socket.send(JSON.stringify({ type: TYPE.queryEntries, content: database.getEntries() }));
       }
       break;
   }
@@ -76,14 +61,15 @@ function initServer() {
   console.log("Activate server for this node");
   localServer = new WebSocketServer({ port: PORT });
   localServer.on("connection", (socket, req) => {
-    socket.send(JSON.stringify({ type: TYPE.sendIpList, content: p2pUsers }));
+    socket.send(JSON.stringify({ type: TYPE.sendIpList, content: database.getIps() }));
     socket.on("message", function (data) {
-      onMessage(socket, data, p2pUsers);
+      onMessage(socket, data, database);
     });
   });
 }
 
-function connectToAnother(p2ps) {
+function connectToAnother(database) {
+  const p2ps = database.getIps();
   if (secondaryServerSocketClient != undefined) {
     console.log("Second server already defined");
     return;
@@ -115,21 +101,21 @@ function configureClient(server, serverToConnect) {
     console.log("Asked all queries to", serverToConnect);
   });
   server.addEventListener("message", function (data) {
-    onMessage(server, data, p2pUsers);
+    onMessage(server, data, database);
   });
 }
 
-function receive_ips(p2ps, content) {
-  if (containsNewIps(p2ps, content)) {
-    p2pUsers = addIp(p2ps, content);
-    connectToAnother(p2pUsers);
+function receive_ips(database, content) {
+  if (database.containsUnknownIps(content)) {
+    database.addIp(content);
+    connectToAnother(database);
   }
 }
 
-function add_ip(p2ps, content, data, localServer, secondaryServerSocketClient) {
-  if (containsNewIps(p2ps, content)) {
+function add_ip(database, content, data, localServer, secondaryServerSocketClient) {
+  if (database.containsUnknownIps(content)) {
     console.log("Add new client to list:", content);
-    p2pUsers = addIp(p2ps, content);
+    database.addIp(content);
     broadcastData(data, localServer, secondaryServerSocketClient);
   }
 }
@@ -142,27 +128,4 @@ mainServerSocketClient.onerror = function () {
 configureClient(mainServerSocketClient, REGISTRY);
 initServer();
 
-app.get("/", (req, res) => {
-  res.json({
-    p2pUsers,
-    mainNode: REGISTRY,
-    mainConnexion: mainServerSocketClient?._url,
-    secondConnexion: secondaryServerSocketClient?._url,
-    database,
-  });
-});
-
-app.post("/add", (req, res) => {
-  const id = uuidv4();
-  database[id] = req.body;
-  broadcastData(
-    JSON.stringify({ type: TYPE.addEntry, content: { key: id, value: req.body } }),
-    localServer,
-    secondaryServerSocketClient
-  );
-  res.sendStatus(200);
-});
-
-app.listen(EXPRESS_PORT, () => {
-  console.log(`Server listening on port ${EXPRESS_PORT}`);
-});
+webserver(EXPRESS_PORT, REGISTRY, database, localServer, mainServerSocketClient, secondaryServerSocketClient).run();
