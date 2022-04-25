@@ -45,24 +45,3 @@ export const onMessage = (sockets, socket, rawData, database) => {
     }
   }
 };
-
-
-
-export function configureClient(sockets, server, serverAddressToConnect, database, host) {
-  if (!server) {
-    console.log("server instance is null");
-    return;
-  }
-  console.log("Configure client");
-  server.addEventListener("open", () => {
-    server.send(JSON.stringify({ type: TYPE.sendIp, content: [host] }));
-    console.log("Sended my ip to ", serverAddressToConnect, "my ip is", host);
-    server.send(JSON.stringify({ type: TYPE.askForIps }));
-    console.log("Asked all ips to", serverAddressToConnect);
-    server.send(JSON.stringify({ type: TYPE.queryEntries }));
-    console.log("Asked all queries to", serverAddressToConnect);
-  });
-  server.addEventListener("message", function (data) {
-    onMessage(sockets, server, data, database);
-  });
-}

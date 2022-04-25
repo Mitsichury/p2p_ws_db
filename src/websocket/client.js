@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
-import { configureClient } from "./helper.js";
+import { TYPE } from "../model/thread_type.js";
+import { onMessage } from "./helper.js";
 
 export function connectToAnother(database, sockets) {
   const ips = database.getIps();
@@ -23,4 +24,20 @@ export function setupLocalWebsocketClient(sockets, database, address, host) {
   };
   configureClient(sockets, client, address, database, host);
   return client;
+}
+
+
+function configureClient(sockets, server, serverAddressToConnect, database, host) {
+  console.log("Configure client");
+  server.addEventListener("open", () => {
+    server.send(JSON.stringify({ type: TYPE.sendIp, content: [host] }));
+    console.log("Sended my ip to ", serverAddressToConnect, "my ip is", host);
+    server.send(JSON.stringify({ type: TYPE.askForIps }));
+    console.log("Asked all ips to", serverAddressToConnect);
+    server.send(JSON.stringify({ type: TYPE.queryEntries }));
+    console.log("Asked all queries to", serverAddressToConnect);
+  });
+  server.addEventListener("message", function (data) {
+    onMessage(sockets, server, data, database);
+  });
 }
