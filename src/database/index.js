@@ -19,7 +19,6 @@ export function initializeDatabase() {
     },
 
     addEntry: (entry, id) => {
-      console.log(entry, id);
       const entryId = id || uuidv4();
       database[entryId] = entry;
       return { key: entryId, value: entry };

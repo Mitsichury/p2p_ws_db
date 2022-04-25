@@ -1,10 +1,9 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import { broadcastData } from "../../helper.js";
 import { TYPE } from "../model/thread_type.js";
 
-export function webserver(port, REGISTRY, database, localServer, mainServerSocketClient, secondaryServerSocketClient) {
+export function webserver(port, REGISTRY, database, sockets) {
   return {
     run: () => {
       const app = express();
@@ -15,19 +14,15 @@ export function webserver(port, REGISTRY, database, localServer, mainServerSocke
         res.json({
           p2pUsers: database.getIps(),
           registry: REGISTRY,
-          mainConnexion: mainServerSocketClient?._url,
-          secondConnexion: secondaryServerSocketClient?._url,
+          localServer: sockets.getServer()?._url,
+          connections: sockets.getClients()?.map(({_url}) => _url),
           database: database.getEntries(),
         });
       });
 
       app.post("/add", (req, res) => {
         const { key, value } = database.addEntry(req.body);
-        broadcastData(
-          JSON.stringify({ type: TYPE.addEntry, content: { key, value } }),
-          localServer,
-          secondaryServerSocketClient
-        );
+        sockets.broadcast(JSON.stringify({ type: TYPE.addEntry, content: { key, value } }));
         res.sendStatus(200);
       });
       app.listen(port, () => {
