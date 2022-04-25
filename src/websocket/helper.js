@@ -37,6 +37,7 @@ export const onMessage = (sockets, socket, rawData, database) => {
 };
 
 function receive_ips(database, content, sockets) {
+  console.log(content)
   if (database.containsUnknownIps(content)) {
     database.addIp(content);
     connectToAnother(database, sockets);
