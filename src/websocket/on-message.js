@@ -1,3 +1,4 @@
+import { isHashConsistent } from "../database/index.js";
 import { TYPE } from "../model/thread_type.js";
 import { connectToOtherPeer } from "./client.js";
 
@@ -21,7 +22,7 @@ export const onMessage = (sockets, socket, rawData, database) => {
       break;
     case TYPE.addEntry:
       const { key, value } = content;
-      if (database.entryExists(key)) {
+      if (!database.entryExists(key) && isHashConsistent(value, key)) {
         database.addEntry(value, key);
         sockets.broadcast(JSON.stringify({ type: TYPE.addEntry, content: { key, value } }));
       }
