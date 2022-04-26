@@ -1,6 +1,6 @@
-import axios from "axios";
 import { getLocalIp } from "./ip_helper.js";
 import { initializeDatabase } from "./src/database/index.js";
+import { getRegistryIps, sendIpToRegistry } from "./src/request-client/index.js";
 import { webserver } from "./src/webserver/index.js";
 import { connectToOtherPeer } from "./src/websocket/client.js";
 import { initializeSockets } from "./src/websocket/sockets.js";
@@ -13,8 +13,7 @@ const HOST = getLocalIp() + ":" + PORT;
 const database = initializeDatabase();
 const sockets = new initializeSockets(database, PORT, HOST);
 
-axios
-  .get(REGISTRY)
+getRegistryIps()
   .then(({ data }) => {
     if (data?.ips?.length > 0) {
       console.log(data);
@@ -24,10 +23,7 @@ axios
       console.log("/!\\ FIRST NODE AVAILABLE !");
     }
     webserver(EXPRESS_PORT, REGISTRY, database, sockets).run();
-    axios
-      .post(`${REGISTRY}/add`, {
-        ip: HOST,
-      })
+    sendIpToRegistry(HOST)
       .then(() => {
         console.log("Ip sent to registry");
       })

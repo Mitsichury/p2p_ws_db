@@ -33,6 +33,12 @@ export const onMessage = (sockets, socket, rawData, database) => {
         socket.send(JSON.stringify({ type: TYPE.queryEntries, content: database.getEntries() }));
       }
       break;
+    case TYPE.removeIp:
+      if(sockets.clientExists(content?.ip)){
+        sockets.removeClient(content?.ip);
+        sockets.broadcast(data);
+      }
+      break;
   }
 
   function add_ip(content, data, broadcast = false) {

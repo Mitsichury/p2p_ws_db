@@ -1,6 +1,7 @@
 import axios from "axios";
 import { WebSocket } from "ws";
 import { TYPE } from "../model/thread_type.js";
+import { removeIpFromRegistry } from "../request-client/index.js";
 import { onMessage } from "./helper.js";
 
 export function connectToOtherPeer(database, sockets) {
@@ -24,10 +25,11 @@ export function setupLocalWebsocketClient(sockets, database, address, host) {
     console.log("Could not contact server");
   };
   client.onclose = (event) => {
-    const ip = event.target._url.replace("ws://");
-    console.log("setupLocalWebsocketClient.onclose Disconnected!", ip);
+    const ip = event.target._url.replace("ws://", "");
+    console.log("Disconnected from", ip);
+    sockets.removeClient(ip);
     sockets.broadcast(JSON.stringify({ type: TYPE.removeIp, content: ip }));
-    axios.delete(`http://192.168.1.96:4000/remove`, { ip });
+    removeIpFromRegistry(ip);
   };
   configureClient(sockets, client, address, database, host);
   return client;

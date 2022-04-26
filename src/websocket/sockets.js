@@ -13,6 +13,19 @@ export function initializeSockets(database, PORT, HOST) {
     this.clients.push(setupLocalWebsocketClient(this, database, address, HOST));
   };
 
+  this.removeClient = (address) => {
+    const clientToRemove = this.clients.filter((client) => client._url === address)[0];
+    if (!clientToRemove) {
+      return;
+    }
+    clientToRemove.close();
+    this.clients = this.clients.filter((client) => client != clientToRemove);
+  };
+
+  this.clientExists = (address) => {
+    return !!(this.clients.filter((client) => client._url === address)[0])
+  };
+
   this.getClients = () => {
     return this.clients;
   };
@@ -23,7 +36,7 @@ export function initializeSockets(database, PORT, HOST) {
 
   this.getConnectableServer = (ips) => {
     const connected = this.clients?.map(({ _url }) => _url.replace("ws://", ""));
-    console.log("connected server:", connected)
+    console.log("connected server:", connected);
     return ips.filter((ip) => ip != this.HOST && connected.indexOf(ip) === -1);
   };
 

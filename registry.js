@@ -23,14 +23,15 @@ app.post("/add", (req, res) => {
   }
 });
 
-app.delete("/remove", (req, res) => {
-  console.log(req.body);
-  if (req?.body?.ip) {
-    ips = ips.filter((ip) => ip != req.body.ip);
+app.delete("/remove/:ip", (req, res) => {
+  console.log(req.params);
+  if (req?.params?.ip) {
+    ips = ips.filter((ip) => ip != req.params.ip);
     res.sendStatus(204);
   } else {
     res.sendStatus(403);
   }
+  console.log("deleted ip:",ips)
 });
 
 app.listen(EXPRESS_PORT, () => {
