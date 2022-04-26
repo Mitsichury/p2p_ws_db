@@ -2,12 +2,11 @@ import { WebSocket } from "ws";
 import { setupLocalWebsocketClient } from "./client.js";
 import { setupLocalWebsocketServer } from "./server.js";
 
-export function initializeSockets(database, PORT, HOST, REGISTRY) {
+export function initializeSockets(database, PORT, HOST) {
   this.clients = [];
   this.database = database;
   this.PORT = PORT;
   this.HOST = HOST;
-  this.REGISTRY = REGISTRY;
   this.server = setupLocalWebsocketServer(this, database, PORT, HOST);
 
   this.addClient = (address) => {
@@ -25,7 +24,7 @@ export function initializeSockets(database, PORT, HOST, REGISTRY) {
   this.getConnectableServer = (ips) => {
     const connected = this.clients?.map(({ _url }) => _url.replace("ws://", ""));
     console.log("connected server:", connected)
-    return ips.filter((ip) => ip != this.HOST && ip != this.REGISTRY && connected.indexOf(ip) === -1);
+    return ips.filter((ip) => ip != this.HOST && connected.indexOf(ip) === -1);
   };
 
   this.broadcast = (data) => {

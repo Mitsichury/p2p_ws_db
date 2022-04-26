@@ -11,7 +11,7 @@ const EXPRESS_PORT = +PORT + 1000;
 const HOST = getLocalIp() + ":" + PORT;
 
 const database = initializeDatabase();
-const sockets = new initializeSockets(database, PORT, HOST, REGISTRY);
+const sockets = new initializeSockets(database, PORT, HOST);
 
 axios
   .get(REGISTRY)
