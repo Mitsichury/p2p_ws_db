@@ -4,7 +4,7 @@ import { connectToOtherPeer } from "./client.js";
 export const onMessage = (sockets, socket, rawData, database) => {
   const data = rawData.data || rawData;
   const { type, content } = JSON.parse(data);
-  console.log("<--- Received", type, "from", socket._url);
+  console.log("<--- Received", data, "from", socket._url);
   switch (type) {
     case TYPE.sendIp:
       if (!socket._url) {
@@ -34,7 +34,6 @@ export const onMessage = (sockets, socket, rawData, database) => {
       }
       break;
     case TYPE.removeIp:
-      console.log("removeIp", content)
       let broadcastData = false;
       if (sockets.clientExists(content)) {
         sockets.removeClient(content);
