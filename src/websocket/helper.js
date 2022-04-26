@@ -1,5 +1,5 @@
 import { TYPE } from "../model/thread_type.js";
-import { connectToAnother } from "./client.js";
+import { connectToOtherPeer } from "./client.js";
 
 export const onMessage = (sockets, socket, rawData, database) => {
   const data = rawData.data || rawData;
@@ -38,7 +38,7 @@ export const onMessage = (sockets, socket, rawData, database) => {
   function add_ip(content, data, broadcast = false) {
     if (database.containsUnknownIps(content)) {
       database.addIp(content);
-      connectToAnother(database, sockets);
+      connectToOtherPeer(database, sockets);
       if (broadcast) {
         sockets.broadcast(data);
       }

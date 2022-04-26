@@ -2,7 +2,7 @@ import { WebSocket } from "ws";
 import { TYPE } from "../model/thread_type.js";
 import { onMessage } from "./helper.js";
 
-export function connectToAnother(database, sockets) {
+export function connectToOtherPeer(database, sockets) {
   const ips = database.getIps();
   const availableServers = sockets.getConnectableServer(database.getIps());
 
