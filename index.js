@@ -5,26 +5,28 @@ import { webserver } from "./src/webserver/index.js";
 import { connectToOtherPeer } from "./src/websocket/client.js";
 import { initializeSockets } from "./src/websocket/sockets.js";
 import { TYPE } from "./src/model/thread_type.js";
+import publicIp from "public-ip";
+import "dotenv/config";
 
-const REGISTRY = process.env.REGISTRY || "http://192.168.1.96:4000";
-const PORT = process.env.PORT || 3001;
-const EXPRESS_PORT = +PORT + 1000;
-const HOST = getLocalIp() + ":" + PORT;
+const REGISTRY = process.env.REGISTRY;
+const PORT = process.env.PORT;
+const EXPRESS_PORT = process.env.EXPRESS_PORT || +PORT + 1000;
+const host = process.env.LOCAL_ONLY == 1 ? getLocalIp() + ":" + PORT : (await publicIp.v4()) + ":" + PORT;
+console.log("HOST is", host);
 
 const database = initializeDatabase();
-const sockets = new initializeSockets(database, PORT, HOST);
+const sockets = new initializeSockets(database, PORT, host);
 
 getRegistryIps()
   .then(({ data }) => {
     if (data?.ips?.length > 0) {
-      console.log(data);
       database.addIp(data.ips);
       connectToOtherPeer(database, sockets);
     } else {
       console.log("/!\\ FIRST NODE AVAILABLE !");
     }
     webserver(EXPRESS_PORT, REGISTRY, database, sockets).run();
-    sendIpToRegistry(HOST)
+    sendIpToRegistry(host)
       .then(() => {
         console.log("Ip sent to registry");
       })
@@ -38,8 +40,12 @@ getRegistryIps()
   });
 
 async function gracefulShutdown() {
-  await removeIpFromRegistry(HOST);
-  sockets.broadcast(JSON.stringify({ type: TYPE.removeIp, content: HOST }));
+  try {
+    await removeIpFromRegistry(host);
+  } catch (e) {
+    console.log("Error while sending data to registry", e);
+  }
+  sockets.broadcast(JSON.stringify({ type: TYPE.removeIp, content: host }));
   process.exit(0);
 }
 

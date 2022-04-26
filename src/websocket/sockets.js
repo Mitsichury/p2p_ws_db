@@ -2,15 +2,15 @@ import { WebSocket } from "ws";
 import { setupLocalWebsocketClient } from "./client.js";
 import { setupLocalWebsocketServer } from "./server.js";
 
-export function initializeSockets(database, PORT, HOST) {
+export function initializeSockets(database, port, host) {
   this.clients = [];
   this.database = database;
-  this.PORT = PORT;
-  this.HOST = HOST;
-  this.server = setupLocalWebsocketServer(this, database, PORT, HOST);
+  this.PORT = port;
+  this.HOST = host;
+  this.server = setupLocalWebsocketServer(this, database, port, host);
 
   this.addClient = (address) => {
-    this.clients.push(setupLocalWebsocketClient(this, database, address, HOST));
+    this.clients.push(setupLocalWebsocketClient(this, database, address, host));
   };
 
   this.removeClient = (address) => {

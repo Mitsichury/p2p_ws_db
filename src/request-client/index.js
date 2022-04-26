@@ -1,15 +1,13 @@
 import axios from "axios";
 
-const registry = "http://192.168.1.96:4000";
-
 export function getRegistryIps() {
-  return axios.get(registry);
+  return axios.get(process.env.REGISTRY);
 }
 
 export function sendIpToRegistry(ip) {
-  return axios.post(`${registry}/add`, { ip });
+  return axios.post(`${process.env.REGISTRY}/add`, { ip });
 }
 
 export function removeIpFromRegistry(ip) {
-  return axios.delete(`${registry}/remove/` + ip);
+  return axios.delete(`${process.env.REGISTRY}/remove/` + ip);
 }
