@@ -2,19 +2,21 @@ import { WebSocket } from "ws";
 import { setupLocalWebsocketClient } from "./client.js";
 import { setupLocalWebsocketServer } from "./server.js";
 
-export function initializeSockets(database, PORT, HOST) {
+const WS_PREFIX = "ws://";
+
+export function initializeSockets(database, port, host) {
   this.clients = [];
   this.database = database;
-  this.PORT = PORT;
-  this.HOST = HOST;
-  this.server = setupLocalWebsocketServer(this, database, PORT, HOST);
+  this.PORT = port;
+  this.HOST = host;
+  this.server = setupLocalWebsocketServer(this, database, port, host);
 
   this.addClient = (address) => {
-    this.clients.push(setupLocalWebsocketClient(this, database, address, HOST));
+    this.clients.push(setupLocalWebsocketClient(this, database, address, host));
   };
 
   this.removeClient = (address) => {
-    const wsAddress = `ws://${address}`
+    const wsAddress = `${WS_PREFIX}${address}`;
     const clientToRemove = this.clients.filter((client) => client._url === wsAddress)[0];
     if (!clientToRemove) {
       return;
@@ -24,8 +26,8 @@ export function initializeSockets(database, PORT, HOST) {
   };
 
   this.clientExists = (address) => {
-    const wsAddress = `ws://${address}`
-    return !!(this.clients.filter((client) => client._url === wsAddress)[0])
+    const wsAddress = `${WS_PREFIX}${address}`;
+    return !!this.clients.filter((client) => client._url === wsAddress)[0];
   };
 
   this.getClients = () => {
@@ -37,7 +39,7 @@ export function initializeSockets(database, PORT, HOST) {
   };
 
   this.getConnectableServer = (ips) => {
-    const connected = this.clients?.map(({ _url }) => _url.replace("ws://", ""));
+    const connected = this.clients?.map(({ _url }) => _url.replace(WS_PREFIX, ""));
     console.log("connected server:", connected);
     return ips.filter((ip) => ip != this.HOST && connected.indexOf(ip) === -1);
   };
