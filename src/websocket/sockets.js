@@ -2,16 +2,30 @@ import { WebSocket } from "ws";
 import { setupLocalWebsocketClient } from "./client.js";
 import { setupLocalWebsocketServer } from "./server.js";
 
-export function initializeSockets(database, PORT, HOST, REGISTRY) {
+export function initializeSockets(database, PORT, HOST) {
   this.clients = [];
   this.database = database;
   this.PORT = PORT;
   this.HOST = HOST;
-  this.REGISTRY = REGISTRY;
   this.server = setupLocalWebsocketServer(this, database, PORT, HOST);
 
   this.addClient = (address) => {
     this.clients.push(setupLocalWebsocketClient(this, database, address, HOST));
+  };
+
+  this.removeClient = (address) => {
+    const wsAddress = `ws://${address}`
+    const clientToRemove = this.clients.filter((client) => client._url === wsAddress)[0];
+    if (!clientToRemove) {
+      return;
+    }
+    clientToRemove.close();
+    this.clients = this.clients.filter((client) => client != clientToRemove);
+  };
+
+  this.clientExists = (address) => {
+    const wsAddress = `ws://${address}`
+    return !!(this.clients.filter((client) => client._url === wsAddress)[0])
   };
 
   this.getClients = () => {
@@ -24,8 +38,8 @@ export function initializeSockets(database, PORT, HOST, REGISTRY) {
 
   this.getConnectableServer = (ips) => {
     const connected = this.clients?.map(({ _url }) => _url.replace("ws://", ""));
-    console.log("connected server:", connected)
-    return ips.filter((ip) => ip != this.HOST && ip != this.REGISTRY && connected.indexOf(ip) === -1);
+    console.log("connected server:", connected);
+    return ips.filter((ip) => ip != this.HOST && connected.indexOf(ip) === -1);
   };
 
   this.broadcast = (data) => {

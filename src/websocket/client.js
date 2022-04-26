@@ -1,8 +1,9 @@
 import { WebSocket } from "ws";
 import { TYPE } from "../model/thread_type.js";
-import { onMessage } from "./helper.js";
+import { removeIpFromRegistry } from "../request-client/index.js";
+import { onMessage } from "./on-message.js";
 
-export function connectToAnother(database, sockets) {
+export function connectToOtherPeer(database, sockets) {
   const ips = database.getIps();
   const availableServers = sockets.getConnectableServer(database.getIps());
 
@@ -22,10 +23,16 @@ export function setupLocalWebsocketClient(sockets, database, address, host) {
   client.onerror = function () {
     console.log("Could not contact server");
   };
+  client.onclose = (event) => {
+    const ip = event.target._url.replace("ws://", "");
+    console.log("Disconnected from", ip);
+    sockets.removeClient(ip);
+    sockets.broadcast(JSON.stringify({ type: TYPE.removeIp, content: ip }));
+    removeIpFromRegistry(ip);
+  };
   configureClient(sockets, client, address, database, host);
   return client;
 }
-
 
 function configureClient(sockets, server, serverAddressToConnect, database, host) {
   console.log("Configure client");

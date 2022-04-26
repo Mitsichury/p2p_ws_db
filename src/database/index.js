@@ -10,6 +10,14 @@ export function initializeDatabase() {
       return p2pUsers;
     },
 
+    removeIp: (ipToRemove) => {
+      p2pUsers = p2pUsers.filter((ip) => ip != ipToRemove);
+    },    
+    
+    ipExists: (ipToRemove) => {
+      return !!(p2pUsers.filter((ip) => ip == ipToRemove)[0]);
+    },
+
     getIps: () => {
       return p2pUsers;
     },

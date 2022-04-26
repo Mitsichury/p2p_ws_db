@@ -1,10 +1,10 @@
 import { TYPE } from "../model/thread_type.js";
-import { connectToAnother } from "./client.js";
+import { connectToOtherPeer } from "./client.js";
 
 export const onMessage = (sockets, socket, rawData, database) => {
   const data = rawData.data || rawData;
   const { type, content } = JSON.parse(data);
-  console.log("<--- Received", type, "from", socket._url);
+  console.log("<--- Received", type, content, "from", socket._url);
   switch (type) {
     case TYPE.sendIp:
       if (!socket._url) {
@@ -33,12 +33,26 @@ export const onMessage = (sockets, socket, rawData, database) => {
         socket.send(JSON.stringify({ type: TYPE.queryEntries, content: database.getEntries() }));
       }
       break;
+    case TYPE.removeIp:
+      let broadcastData = false;
+      if (sockets.clientExists(content)) {
+        sockets.removeClient(content);
+        broadcastData = true;
+      }
+      if (database.ipExists(content)) {
+        database.removeIp(content);
+        broadcastData = true;
+      }
+      if (broadcastData) {
+        sockets.broadcast(data);
+      }
+      break;
   }
 
   function add_ip(content, data, broadcast = false) {
     if (database.containsUnknownIps(content)) {
       database.addIp(content);
-      connectToAnother(database, sockets);
+      connectToOtherPeer(database, sockets);
       if (broadcast) {
         sockets.broadcast(data);
       }

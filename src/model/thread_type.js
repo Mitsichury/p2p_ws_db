@@ -5,4 +5,5 @@ export const TYPE = {
   sendIp: "add_ip",
   addEntry: "add_entry",
   queryEntries: "query_entries",
+  removeIp: "remove_ip",
 };
