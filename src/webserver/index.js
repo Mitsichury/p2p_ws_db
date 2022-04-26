@@ -2,6 +2,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
 import { TYPE } from "../model/thread_type.js";
+import { isTransactionStatusValid } from "../model/transaction_status.js";
 
 export function webserver(port, REGISTRY, database, sockets) {
   return {
@@ -15,7 +16,7 @@ export function webserver(port, REGISTRY, database, sockets) {
           p2pUsers: database.getIps(),
           registry: REGISTRY,
           localServer: sockets.getServer()?._url,
-          connections: sockets.getClients()?.map(({_url}) => _url),
+          connections: sockets.getClients()?.map(({ _url }) => _url),
           database: database.getEntries(),
         });
       });
@@ -25,6 +26,21 @@ export function webserver(port, REGISTRY, database, sockets) {
         sockets.broadcast(JSON.stringify({ type: TYPE.addEntry, content: { key, value } }));
         res.sendStatus(200);
       });
+
+      app.put("/edit/:id", (req, res) => {
+        if (!req?.params?.id || !req?.body?.status) {
+          res.sendStatus(400);
+        }
+        if(!database.entryExists(req.params.id) || !isTransactionStatusValid(req.body.status)){
+          res.sendStatus(403);
+        }
+        database.editEntry(req.params.id, req.body.status);
+        sockets.broadcast(
+          JSON.stringify({ type: TYPE.editEntry, content: { id: req.params.id, status: req.body.status } })
+        );
+        res.sendStatus(200);
+      });
+
       app.listen(port, () => {
         console.log(`Server listening on port ${port}`);
       });
