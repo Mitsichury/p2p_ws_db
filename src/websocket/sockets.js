@@ -14,7 +14,8 @@ export function initializeSockets(database, PORT, HOST) {
   };
 
   this.removeClient = (address) => {
-    const clientToRemove = this.clients.filter((client) => client._url === address)[0];
+    const wsAddress = `ws://${address}`
+    const clientToRemove = this.clients.filter((client) => client._url === wsAddress)[0];
     if (!clientToRemove) {
       return;
     }
@@ -23,7 +24,8 @@ export function initializeSockets(database, PORT, HOST) {
   };
 
   this.clientExists = (address) => {
-    return !!(this.clients.filter((client) => client._url === address)[0])
+    const wsAddress = `ws://${address}`
+    return !!(this.clients.filter((client) => client._url === wsAddress)[0])
   };
 
   this.getClients = () => {

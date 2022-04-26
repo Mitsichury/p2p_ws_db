@@ -34,8 +34,17 @@ export const onMessage = (sockets, socket, rawData, database) => {
       }
       break;
     case TYPE.removeIp:
-      if(sockets.clientExists(content?.ip)){
-        sockets.removeClient(content?.ip);
+      console.log("removeIp", content)
+      let broadcastData = false;
+      if (sockets.clientExists(content)) {
+        sockets.removeClient(content);
+        broadcastData = true;
+      }
+      if (database.ipExists(content)) {
+        database.removeIp(content);
+        broadcastData = true;
+      }
+      if (broadcastData) {
         sockets.broadcast(data);
       }
       break;
