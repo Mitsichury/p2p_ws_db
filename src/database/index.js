@@ -30,6 +30,10 @@ export function initializeDatabase() {
       const entryId = id || hashObject(entry);
       database[entryId] = entry;
       return { key: entryId, value: entry };
+    },    
+    
+    editEntry: (id, status) => {
+      database[id].status = status;
     },
 
     addAll: (entries) => {
@@ -38,6 +42,10 @@ export function initializeDatabase() {
 
     getEntries: () => {
       return database;
+    },
+
+    getEntry: (id) => {
+      return database[id];
     },
 
     entryExists: (key) => {

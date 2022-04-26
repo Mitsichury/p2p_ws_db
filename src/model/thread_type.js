@@ -6,4 +6,5 @@ export const TYPE = {
   addEntry: "add_entry",
   queryEntries: "query_entries",
   removeIp: "remove_ip",
+  editEntry: "edit_entry",
 };

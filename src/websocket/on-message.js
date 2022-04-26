@@ -1,5 +1,6 @@
 import { isHashConsistent } from "../database/index.js";
 import { TYPE } from "../model/thread_type.js";
+import { isTransactionStatusValid } from "../model/transaction_status.js";
 import { connectToOtherPeer } from "./client.js";
 
 export const onMessage = (sockets, socket, rawData, database) => {
@@ -24,8 +25,19 @@ export const onMessage = (sockets, socket, rawData, database) => {
       const { key, value } = content;
       if (!database.entryExists(key) && isHashConsistent(value, key)) {
         database.addEntry(value, key);
-        sockets.broadcast(JSON.stringify({ type: TYPE.addEntry, content: { key, value } }));
+        sockets.broadcast(data);
       }
+      break;
+    case TYPE.editEntry:
+      const { id, status } = content;
+      if (!database.entryExists(id) || !isTransactionStatusValid(status)) {
+        return;
+      }
+      if(database.getEntry(id).status === status){
+        return;
+      }
+      database.editEntry(id, status);
+      sockets.broadcast(data);
       break;
     case TYPE.queryEntries:
       if (content) {
