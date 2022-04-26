@@ -4,5 +4,5 @@ export const transactionStatus = {
 };
 
 export function isTransactionStatusValid(status){
-    return Object.keys(transactionStatus).indexOf(status) != -1;
+    return Object.values(transactionStatus).indexOf(status) != -1;
 }

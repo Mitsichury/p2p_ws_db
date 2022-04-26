@@ -30,9 +30,12 @@ export function webserver(port, REGISTRY, database, sockets) {
       app.put("/edit/:id", (req, res) => {
         if (!req?.params?.id || !req?.body?.status) {
           res.sendStatus(400);
+          return;
         }
         if(!database.entryExists(req.params.id) || !isTransactionStatusValid(req.body.status)){
+          console.log(req.params.id, req.body.status)
           res.sendStatus(403);
+          return;
         }
         database.editEntry(req.params.id, req.body.status);
         sockets.broadcast(
