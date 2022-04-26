@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
 
 export function initializeDatabase() {
   let p2pUsers = [];
@@ -12,10 +12,10 @@ export function initializeDatabase() {
 
     removeIp: (ipToRemove) => {
       p2pUsers = p2pUsers.filter((ip) => ip != ipToRemove);
-    },    
-    
+    },
+
     ipExists: (ipToRemove) => {
-      return !!(p2pUsers.filter((ip) => ip == ipToRemove)[0]);
+      return !!p2pUsers.filter((ip) => ip == ipToRemove)[0];
     },
 
     getIps: () => {
@@ -27,7 +27,7 @@ export function initializeDatabase() {
     },
 
     addEntry: (entry, id) => {
-      const entryId = id || uuidv4();
+      const entryId = id || hashObject(entry);
       database[entryId] = entry;
       return { key: entryId, value: entry };
     },
@@ -41,7 +41,17 @@ export function initializeDatabase() {
     },
 
     entryExists: (key) => {
-      return Object.keys(database).indexOf(key) == -1;
+      return Object.keys(database).indexOf(key) != -1;
     },
   };
+}
+
+function hashObject(object) {
+  const stringObject = JSON.stringify(object);
+  const hashed = crypto.createHash("sha256").update(stringObject, "utf-8");
+  return hashed.digest("hex");
+}
+
+export function isHashConsistent(object, expectedId) {
+  return hashObject(object) == expectedId;
 }
