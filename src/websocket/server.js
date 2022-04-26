@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { TYPE } from "../model/thread_type.js";
-import { onMessage } from "./helper.js";
+import { onMessage } from "./on-message.js";
 
 export function setupLocalWebsocketServer(sockets, database, port, host) {
   console.log("Activate server for this node");

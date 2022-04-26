@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { TYPE } from "../model/thread_type.js";
 import { removeIpFromRegistry } from "../request-client/index.js";
-import { onMessage } from "./helper.js";
+import { onMessage } from "./on-message.js";
 
 export function connectToOtherPeer(database, sockets) {
   const ips = database.getIps();
