@@ -1,9 +1,10 @@
 import { getLocalIp } from "./ip_helper.js";
 import { initializeDatabase } from "./src/database/index.js";
-import { getRegistryIps, sendIpToRegistry } from "./src/request-client/index.js";
+import { getRegistryIps, removeIpFromRegistry, sendIpToRegistry } from "./src/request-client/index.js";
 import { webserver } from "./src/webserver/index.js";
 import { connectToOtherPeer } from "./src/websocket/client.js";
 import { initializeSockets } from "./src/websocket/sockets.js";
+import { TYPE } from "./src/model/thread_type.js";
 
 const REGISTRY = process.env.REGISTRY || "http://192.168.1.96:4000";
 const PORT = process.env.PORT || 3001;
@@ -33,4 +34,18 @@ getRegistryIps()
   })
   .catch(function (error) {
     console.log(error);
+    process.exit(1);
   });
+
+async function gracefulShutdown() {
+  await removeIpFromRegistry(HOST);
+  sockets.broadcast(JSON.stringify({ type: TYPE.removeIp, content: HOST }));
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => {
+  gracefulShutdown();
+});
+process.on("SIGINT", () => {
+  gracefulShutdown();
+});

@@ -14,7 +14,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/add", (req, res) => {
-  console.log(req.body);
   if (req?.body?.ip && ips.indexOf(req?.body?.ip) === -1) {
     ips.push(req.body.ip);
     res.sendStatus(204);
@@ -24,14 +23,12 @@ app.post("/add", (req, res) => {
 });
 
 app.delete("/remove/:ip", (req, res) => {
-  console.log(req.params);
   if (req?.params?.ip) {
     ips = ips.filter((ip) => ip != req.params.ip);
     res.sendStatus(204);
   } else {
     res.sendStatus(403);
   }
-  console.log("deleted ip:",ips)
 });
 
 app.listen(EXPRESS_PORT, () => {

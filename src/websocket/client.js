@@ -1,4 +1,3 @@
-import axios from "axios";
 import { WebSocket } from "ws";
 import { TYPE } from "../model/thread_type.js";
 import { removeIpFromRegistry } from "../request-client/index.js";

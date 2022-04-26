@@ -11,13 +11,10 @@ export function initializeDatabase() {
     },
 
     removeIp: (ipToRemove) => {
-      console.log("removeIp")
       p2pUsers = p2pUsers.filter((ip) => ip != ipToRemove);
-      console.log(p2pUsers);
     },    
     
     ipExists: (ipToRemove) => {
-      console.log("ipExists")
       return !!(p2pUsers.filter((ip) => ip == ipToRemove)[0]);
     },
 
