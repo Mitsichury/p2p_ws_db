@@ -59,12 +59,12 @@ export class Database {
   }
 }
 
-function hashObject(object: any) {
-  const stringObject = JSON.stringify(object);
+function hashObject(entry: Entry) {
+  const stringObject = JSON.stringify(entry);
   const hashed = crypto.createHash("sha256").update(stringObject, "utf-8");
   return hashed.digest("hex");
 }
 
-export function isHashConsistent(object: any, expectedId: string) {
-  return hashObject(object) == expectedId;
+export function isHashConsistent(entry: Entry, expectedId: string) {
+  return hashObject(entry) == expectedId;
 }
