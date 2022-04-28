@@ -1,10 +1,11 @@
+import { Sockets } from './../websocket/sockets';
+import { Database } from './../database/Database';
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import { TYPE } from "../model/thread_type.js";
-import { isTransactionStatusValid } from "../model/transaction_status.js";
+import { TYPE } from "../model/ThreadType.js";
 
-export function webserver(port, REGISTRY, database, sockets) {
+export function webserver(port: number, registry: string, database: Database, sockets: Sockets) {
   return {
     run: () => {
       const app = express();
@@ -14,9 +15,9 @@ export function webserver(port, REGISTRY, database, sockets) {
       app.get("/", (req, res) => {
         res.json({
           p2pUsers: database.getIps(),
-          registry: REGISTRY,
+          registry: registry,
           localServer: sockets.getServer()?._url,
-          connections: sockets.getClients()?.map(({ _url }) => _url),
+          connections: sockets.getClients()?.map(({ url }) => url),
           database: database.getEntries(),
         });
       });
@@ -32,8 +33,7 @@ export function webserver(port, REGISTRY, database, sockets) {
           res.sendStatus(400);
           return;
         }
-        if(!database.entryExists(req.params.id) || !isTransactionStatusValid(req.body.status)){
-          console.log(req.params.id, req.body.status)
+        if(!database.entryExists(req.params.id)){
           res.sendStatus(403);
           return;
         }

@@ -1,9 +1,12 @@
-import { isHashConsistent } from "../database/index.js";
-import { TYPE } from "../model/thread_type.js";
-import { isTransactionStatusValid } from "../model/transaction_status.js";
+import { TransactionStatus } from './../model/TransactionStatus';
+import { Database } from './../database/Database';
+import { Sockets } from './sockets';
+import { isHashConsistent } from "../database/Database.js";
+import { TYPE } from "../model/ThreadType.js";
 import { connectToOtherPeer } from "./client.js";
+import { WebSocket } from "ws";
 
-export const onMessage = (sockets, socket, rawData, database) => {
+export const onMessage = (sockets: Sockets, socket: WebSocket, rawData: any, database: Database) => {
   const data = rawData.data || rawData;
   const { type, content } = JSON.parse(data);
   console.log("<--- Received", type, content, "from", socket._url);
@@ -29,11 +32,11 @@ export const onMessage = (sockets, socket, rawData, database) => {
       }
       break;
     case TYPE.editEntry:
-      const { id, status } = content;
-      if (!database.entryExists(id) || !isTransactionStatusValid(status)) {
+      const { id, status }: { id: string, status: TransactionStatus } = content;
+      if (!database.entryExists(id)) {
         return;
       }
-      if(database.getEntry(id).status === status){
+      if (database.getEntry(id)!.status === status) {
         return;
       }
       database.editEntry(id, status);
@@ -62,9 +65,9 @@ export const onMessage = (sockets, socket, rawData, database) => {
       break;
   }
 
-  function add_ip(content, data, broadcast = false) {
-    if (database.containsUnknownIps(content)) {
-      database.addIp(content);
+  function add_ip(ips: string[], data: any, broadcast = false) {
+    if (database.containsUnknownIps(ips)) {
+      database.addIp(ips);
       connectToOtherPeer(database, sockets);
       if (broadcast) {
         sockets.broadcast(data);
