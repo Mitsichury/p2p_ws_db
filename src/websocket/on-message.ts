@@ -9,10 +9,10 @@ import { WebSocket } from "ws";
 export const onMessage = (sockets: Sockets, socket: WebSocket, rawData: any, database: Database) => {
   const data = rawData.data || rawData;
   const { type, content } = JSON.parse(data);
-  console.log("<--- Received", type, content, "from", socket.url);
+  console.log("<--- Received", type, content, "from", socket._url);
   switch (type) {
     case TYPE.sendIp:
-      if (!socket.url) {
+      if (!socket._url) {
         socket._url = content[0];
       }
       add_ip(content, data);

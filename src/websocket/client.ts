@@ -26,7 +26,7 @@ export function setupLocalWebsocketClient(sockets: Sockets, database: Database, 
     console.log("Could not contact server");
   };
   client.onclose = (event) => {
-    const ip = event.target.url.replace("ws://", "");
+    const ip = event.target._url?.replace("ws://", "") || "unknonwn";
     console.log("Disconnected from", ip);
     sockets.removeClient(ip);
     sockets.broadcast(JSON.stringify({ type: TYPE.removeIp, content: ip }));

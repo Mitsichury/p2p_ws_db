@@ -26,7 +26,7 @@ export class Sockets {
   }
   removeClient = (address: string) => {
     const wsAddress = `${WS_PREFIX}${address}`;
-    const clientToRemove = this.clients.filter((client) => client.url === wsAddress)[0];
+    const clientToRemove = this.clients.filter((client) => client._url === wsAddress)[0];
     if (!clientToRemove) {
       return;
     }
@@ -36,7 +36,7 @@ export class Sockets {
 
   clientExists = (address: string) => {
     const wsAddress = `${WS_PREFIX}${address}`;
-    return !!this.clients.filter((client) => client.url === wsAddress)[0];
+    return !!this.clients.filter((client) => client._url === wsAddress)[0];
   };
 
   getClients = () => {
