@@ -1,9 +1,11 @@
 import { WebSocket } from "ws";
-import { TYPE } from "../model/thread_type.js";
+import { Database } from '../database/Database';
+import { TYPE } from "../model/ThreadType.js";
 import { removeIpFromRegistry } from "../request-client/index.js";
 import { onMessage } from "./on-message.js";
+import { Sockets } from './sockets';
 
-export function connectToOtherPeer(database, sockets) {
+export function connectToOtherPeer(database: Database, sockets: Sockets) {
   const ips = database.getIps();
   const availableServers = sockets.getConnectableServer(database.getIps());
 
@@ -12,19 +14,19 @@ export function connectToOtherPeer(database, sockets) {
     return;
   }
   console.log("availableServers", availableServers);
-  availableServers.forEach((ip) => {
+  availableServers.forEach((ip: string) => {
     console.log("new connection to ", ip);
     sockets.addClient(ip);
   });
 }
 
-export function setupLocalWebsocketClient(sockets, database, address, host) {
+export function setupLocalWebsocketClient(sockets: Sockets, database: Database, address: string, host: string) {
   let client = new WebSocket("ws://" + address);
   client.onerror = function () {
     console.log("Could not contact server");
   };
   client.onclose = (event) => {
-    const ip = event.target._url.replace("ws://", "");
+    const ip = event.target.url.replace("ws://", "");
     console.log("Disconnected from", ip);
     sockets.removeClient(ip);
     sockets.broadcast(JSON.stringify({ type: TYPE.removeIp, content: ip }));
@@ -34,17 +36,17 @@ export function setupLocalWebsocketClient(sockets, database, address, host) {
   return client;
 }
 
-function configureClient(sockets, server, serverAddressToConnect, database, host) {
+function configureClient(sockets: Sockets, client: WebSocket, serverAddressToConnect: string, database: Database, host: string) {
   console.log("Configure client");
-  server.addEventListener("open", () => {
-    server.send(JSON.stringify({ type: TYPE.sendIp, content: [host] }));
+  client.addEventListener("open", () => {
+    client.send(JSON.stringify({ type: TYPE.sendIp, content: [host] }));
     console.log("Sended my ip to ", serverAddressToConnect, "my ip is", host);
-    server.send(JSON.stringify({ type: TYPE.askForIps }));
+    client.send(JSON.stringify({ type: TYPE.askForIps }));
     console.log("Asked all ips to", serverAddressToConnect);
-    server.send(JSON.stringify({ type: TYPE.queryEntries }));
+    client.send(JSON.stringify({ type: TYPE.queryEntries }));
     console.log("Asked all queries to", serverAddressToConnect);
   });
-  server.addEventListener("message", function (data) {
-    onMessage(sockets, server, data, database);
+  client.addEventListener("message", (data) => {
+    onMessage(sockets, client, data, database);
   });
 }

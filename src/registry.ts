@@ -3,7 +3,7 @@ import cors from "cors";
 import express from "express";
 const app = express();
 
-let ips = [];
+let ips:string[] = [];
 const EXPRESS_PORT = process.env.PORT || 3001;
 
 app.use(cors());
