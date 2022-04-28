@@ -1,4 +1,4 @@
-import { TransactionStatus } from './../model/TransactionStatus';
+import { TransactionStatus } from './TransactionStatus.js';
 
 export class Entry {
     by: string;

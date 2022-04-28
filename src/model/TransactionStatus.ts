@@ -1,4 +1,5 @@
 export enum TransactionStatus {
-  CANCELED,
-  DONE
+  IN_PROGRESS = "IN_PROGRESS",
+  CANCELED = "CANCELED",
+  DONE = "DONE"
 };

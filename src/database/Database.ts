@@ -1,70 +1,19 @@
-import crypto from "crypto";
-import { TransactionStatus } from '../model/TransactionStatus';
-import { Entry } from './Entry';
+import { Entry } from './../model/Entry.js';
+import { TransactionStatus } from './../model/TransactionStatus.js';
+export interface Database {
+    addEntry(entry: Entry, entryId: string): void;
 
-export class Database {
-  p2pUsers: string[];
-  database: Record<string, Entry>;
+    addAll(entries: Record<string, Entry>): void;
 
-  constructor() {
-    this.p2pUsers = [];
-    this.database = {};
-  }
+    editEntry(id: string, status: TransactionStatus): void;
 
-  addIp = (ips: string[]) => {
-    this.p2pUsers = [...new Set([...this.p2pUsers, ...ips])];
-    return this.p2pUsers;
-  }
+    getEntry(id: string): Entry;
 
-  removeIp = (ipToRemove: string) => {
-    this.p2pUsers = this.p2pUsers.filter((ip) => ip != ipToRemove);
-  }
+    getEntries(): Record<string, Entry>;
 
-  ipExists = (ipToFind: string) => {
-    return !!this.p2pUsers.filter((ip) => ipToFind == ip)[0];
-  }
+    entryExists(id: string): boolean;
 
-  getIps = () => {
-    return this.p2pUsers;
-  }
+    generateId(entry: Entry): string;
 
-  containsUnknownIps = (newIps: string[]) => {
-    return newIps.filter((ip) => this.p2pUsers.indexOf(ip) == -1).length > 0;
-  }
-
-  addEntry = (entry: Entry, id?: string) => {
-    const entryId = id || hashObject(entry);
-    this.database[entryId] = entry;
-    return { key: entryId, value: entry };
-  }
-
-  editEntry = (id: string, status: TransactionStatus) => {
-    this.database[id]!.status = status;
-  }
-
-  addAll = (entries: Record<string, Entry>) => {
-    this.database = { ...entries };
-  }
-
-  getEntries = () => {
-    return this.database;
-  }
-
-  getEntry = (id: string) => {
-    return this.database[id];
-  }
-
-  entryExists = (id: string) => {
-    return Object.keys(this.database).indexOf(id) != -1;
-  }
-}
-
-function hashObject(entry: Entry) {
-  const stringObject = JSON.stringify(entry);
-  const hashed = crypto.createHash("sha256").update(stringObject, "utf-8");
-  return hashed.digest("hex");
-}
-
-export function isHashConsistent(entry: Entry, expectedId: string) {
-  return hashObject(entry) == expectedId;
+    isIdConsistent(entry: Entry, expectedId: string): boolean;
 }
